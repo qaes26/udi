@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سينما ملاك | قصة حب</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Amiri:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #eee;
+            font-family: 'Cairo', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        /* --- تأثيرات الفيلم القديم --- */
+        .film-grain {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.12;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .scratch {
+            position: fixed;
+            top: 0; left: 10%; width: 2px; height: 100%;
+            background: rgba(255,255,255,0.2);
+            animation: scratchAnim 0.6s infinite steps(1);
+            z-index: 51;
+            display: none; /* مخفي حتى يبدأ العرض */
+        }
+
+        @keyframes scratchAnim {
+            0% { left: 10%; opacity: 0; }
+            10% { opacity: 0.4; }
+            20% { left: 80%; opacity: 0; }
+            50% { left: 40%; opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
+        /* --- التذكرة الذهبية --- */
+        .ticket-wrapper {
+            perspective: 1000px;
+            z-index: 100;
+            transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .ticket {
+            background: linear-gradient(135deg, #c5a059 0%, #f3dca6 50%, #c5a059 100%);
+            width: 340px;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 15px rgba(197, 160, 89, 0.3);
+            position: relative;
+            color: #3e2c00;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid #ffeebb;
+            transition: transform 0.3s;
+        }
+
+        .ticket:hover { transform: scale(1.05) rotate(2deg); }
+
+        /* ثقوب التذكرة */
+        .ticket::before, .ticket::after {
+            content: '';
+            position: absolute;
+            background-color: #0a0a0a;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .ticket::before { left: -15px; }
+        .ticket::after { right: -15px; }
+
+        .dashed-divider {
+            border-top: 2px dashed #3e2c00;
+            margin: 20px 0;
+            opacity: 0.4;
+        }
+
+        /* --- شاشة السينما --- */
+        .cinema-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            display: none; /* مخفي في البداية */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 40;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+        }
+
+        /* ضوء البروجيكتور */
+        .projector-beam {
+            position: absolute;
+            top: -20%; left: 50%; width: 60%; height: 120%;
+            transform: translateX(-50%) perspective(400px) rotateX(20deg);
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            animation: flickerLight 0.15s infinite;
+            z-index: 30;
+        }
+
+        @keyframes flickerLight {
+            0% { opacity: 0.8; }
+            50% { opacity: 0.6; }
+            100% { opacity: 0.9; }
+        }
+
+        /* النصوص السينمائية */
+        .movie-text {
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.8s ease-out;
+            position: absolute;
+            width: 90%;
+            text-shadow: 0 0 20px rgba(255,255,255,0.4);
+        }
+
+        .movie-text.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .movie-text.hide {
+            opacity: 0;
+            transform: scale(1.1) translateY(-20px);
+            filter: blur(5px);
+        }
+
+        /* العد التنازلي */
+        .countdown-circle {
+            width: 150px; height: 150px;
+            border: 4px solid rgba(255,255,255,0.8);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 5rem;
+            font-family: 'Amiri', serif;
+            position: relative;
+        }
+        
+        .countdown-line {
+            position: absolute;
+            top: 50%; left: 50%; width: 50%; height: 2px;
+            background: white;
+            transform-origin: left center;
+            animation: clockHand 1s linear infinite;
+        }
+        @keyframes clockHand { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+
+        /* التوقيع */
+        .signature-footer {
+            position: absolute;
+            bottom: 30px;
+            color: #666;
+            font-family: 'Amiri', serif;
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity 2s;
+            text-align: center;
+        }
+
+        .replay-btn {
+            margin-top: 15px;
+            background: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: 0.3s;
+        }
+        .replay-btn:hover { border-color: white; color: white; }
+
+    </style>
+</head>
+<body>
+
+    <!-- طبقة الضجيج السينمائي -->
+    <div class="film-grain"></div>
+    <div class="scratch" id="scratch"></div>
+
+    <!-- 1. واجهة التذكرة -->
+    <div class="ticket-wrapper" id="ticketScreen">
+        <div class="ticket" onclick="startShow()">
+            <div class="flex justify-between items-center opacity-70 mb-2">
+                <span class="text-xs font-bold tracking-widest uppercase">Golden Ticket</span>
+                <i class="fas fa-heart"></i>
+            </div>
+            
+            <h1 class="text-3xl font-black mb-1">عرض خاص</h1>
+            <h2 class="text-xl font-serif text-yellow-900 font-bold">للسيدة: ملاك المغربي</h2>
+            
+            <div class="dashed-divider"></div>
+            
+            <div class="flex justify-between items-end px-2">
+                <div class="text-right">
+                    <p class="text-xs font-bold uppercase opacity-60">التاريخ</p>
+                    <p class="text-sm font-bold">اليوم وكل يوم</p>
+                </div>
+                <div class="text-left">
+                    <p class="text-xs font-bold uppercase opacity-60">المقعد</p>
+                    <p class="text-sm font-bold">VIP - في القلب</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-yellow-900/10 py-2 rounded border border-yellow-900/20">
+                <p class="text-xs font-bold animate-pulse">اضغطي هنا لبدء العرض <i class="fas fa-play-circle ml-1"></i></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. واجهة العرض -->
+    <div class="cinema-screen" id="cinemaScreen">
+        <div class="projector-beam"></div>
+        
+        <!-- منطقة المحتوى المتغير -->
+        <div id="contentArea" class="flex justify-center items-center w-full h-full relative z-50">
+            <!-- النصوص ستظهر هنا -->
+        </div>
+
+        <!-- التوقيع النهائي -->
+        <div class="signature-footer" id="footer">
+            <p>من إعداد قيس جازي ❤️</p>
+            <button class="replay-btn" onclick="location.reload()">إعادة العرض <i class="fas fa-undo"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // سيناريو العرض الرومانسي الخاص بملاك
+        const scenes = [
+            { type: 'count', val: '3', time: 1000 },
+            { type: 'count', val: '2', time: 1000 },
+            { type: 'count', val: '1', time: 1000 },
+            { type: 'text', val: 'فيلم حياتي..', time: 2000 },
+            { type: 'text', val: 'عن بطلة قصتي', time: 2500 },
+            { type: 'text', val: 'ملاك المغربي', style: 'font-family:"Amiri"; font-size:4rem; color:#d4af37;', time: 3000 }, 
+            { type: 'text', val: 'كل مشهد معكِ..', time: 2500 },
+            { type: 'text', val: 'هو الأجمل على الإطلاق.', time: 2500 },
+            { type: 'text', val: 'أنتِ النجمة..', time: 2000 },
+            { type: 'text', val: 'وأنا جمهورك الأول للأبد.', time: 3000 },
+            { type: 'text', val: '<i class="fas fa-heart text-red-600 text-6xl animate-pulse"></i>', time: 2500 },
+            { type: 'end', val: '', time: 0 }
+        ];
+
+        let currentStep = 0;
+        const ticketScreen = document.getElementById('ticketScreen');
+        const cinemaScreen = document.getElementById('cinemaScreen');
+        const scratch = document.getElementById('scratch');
+        const contentArea = document.getElementById('contentArea');
+        const footer = document.getElementById('footer');
+
+        function startShow() {
+            // أنيميشن اختفاء التذكرة
+            ticketScreen.style.transform = "rotateX(70deg) translateY(-200px) scale(0.5)";
+            ticketScreen.style.opacity = "0";
+            
+            setTimeout(() => {
+                ticketScreen.style.display = 'none';
+                cinemaScreen.style.display = 'flex';
+                scratch.style.display = 'block'; // تشغيل تأثير الخدوش
+                playNextScene();
+            }, 800);
+        }
+
+        function playNextScene() {
+            if (currentStep >= scenes.length) return;
+
+            const scene = scenes[currentStep];
+            contentArea.innerHTML = ''; // تنظيف
+
+            if (scene.type === 'end') {
+                showEndCard();
+                return;
+            }
+
+            // إنشاء العنصر
+            const el = document.createElement('div');
+            
+            if (scene.type === 'count') {
+                el.className = 'countdown-circle';
+                el.innerHTML = `<span>${scene.val}</span><div class="countdown-line"></div>`;
+            } else {
+                el.className = 'movie-text';
+                el.innerHTML = scene.val;
+                if (scene.style) el.style.cssText = scene.style; // ستايل خاص للاسم
+            }
+
+            contentArea.appendChild(el);
+
+            // تفعيل الظهور (Reflow hack)
+            void el.offsetWidth; 
+            if (scene.type !== 'count') el.classList.add('show');
+
+            // جدولة الاختفاء والانتقال للتالي
+            setTimeout(() => {
+                if (scene.type !== 'count') {
+                    el.classList.remove('show');
+                    el.classList.add('hide');
+                }
+                
+                setTimeout(() => {
+                    currentStep++;
+                    playNextScene();
+                }, 500); // وقت انتقال بسيط
+
+            }, scene.time);
+        }
+
+        function showEndCard() {
+            contentArea.innerHTML = `
+                <div class="text-center">
+                    <h1 class="text-4xl font-serif text-white mb-2">النهاية</h1>
+                    <p class="text-gray-500 text-sm">مجرد بداية لقصتنا</p>
+                </div>
+            `;
+            footer.style.opacity = '1';
+            scratch.style.display = 'none'; // إيقاف الخدوش للهدوء
+        }
+
+    </script>
+</body>
+</html>
+
+
